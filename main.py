@@ -1,0 +1,66 @@
+import streamlit as st
+from PIL import Image,ImageDraw,ImageFont
+from streamlit.logger import update_formatter
+import requests,json,urllib.request,os
+import io
+
+st.title('顔認識アプリ')
+
+
+# サブスクリプションキー設定
+subscription_key = '4cdef1d62c83454c886a7eb3f6b05f2a'
+assert subscription_key
+ 
+# エンドポイントURL設定
+face_api_url = 'https://detectfaceapp.cognitiveservices.azure.com/face/v1.0/detect'
+
+
+uploaded_file= st.file_uploader("Choose an image...", type='jpg')
+if uploaded_file is not None:
+# 顔認識させる画像の取得
+ img = Image.open(uploaded_file)
+
+# 画像データをバイナリ化する
+ with io.BytesIO() as output:
+    img.save(output, format="JPEG")
+    binary_img = output.getvalue() #バイナリ取得
+
+# ヘッダ設定
+ headers = {
+    # バイナリデータを使うときに必要
+    'Content-Type': 'application/octet-stream',
+    'Ocp-Apim-Subscription-Key': subscription_key
+ }
+ 
+# パラメーターの設定
+ params = {
+    'returnFaceId': 'true',
+    'returnFaceLandmarks': 'false',
+    'returnFaceAttributes': 'age,gender,headPose,smile,facialHair,glasses,emotion,hair,makeup,occlusion,accessories,blur,exposure,noise',
+ }
+ 
+# POSTリクエスト
+ request = requests.post(face_api_url, params=params,
+                         headers=headers, data=binary_img)
+ 
+# JSONデコード
+ results = request.json()
+
+# 認識された顔の上に年齢を描く関数
+ def getAge(rect):
+    left = rect['left']
+    top = rect['top'] - 50
+    return (left, top)
+
+# 矩形の抽出
+ for result in results:
+  rect=result['faceRectangle']
+  draw = ImageDraw.Draw(img)
+  draw.rectangle([(rect['left'], rect['top']), (rect['left']+rect['width'], rect['top']+rect['height'])], fill=None, outline='green', width=5)
+  draw.text(getAge(rect),
+          str(result['faceAttributes']['age'])+", "+result['faceAttributes']['gender'],
+          align = 'Left', 
+          font = ImageFont.truetype(r'C:\Windows\Fonts\HGRSGU.TTC', 20),
+          fill = 'Black')
+ st.image(img, caption='Uploaded Image', use_column_width=True)
+
