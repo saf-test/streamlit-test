@@ -60,7 +60,7 @@ if uploaded_file is not None:
   draw.text(getAge(rect),
           str(result['faceAttributes']['age'])+", "+result['faceAttributes']['gender'],
           align = 'Left', 
-          font = ImageFont.truetype(r'C:\Windows\Fonts\HGRSGU.TTC', 20),
+          font = ImageFont.truetype(r'HGRSGU.TTC', 20),
           fill = 'Black')
  st.image(img, caption='Uploaded Image', use_column_width=True)
 
